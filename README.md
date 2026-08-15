@@ -2,4 +2,4 @@ code for 3rd thesis chapter. Run scripts in /Code following the order in the fil
 
 Order, data and figures comign soon
 
-This chapter explores how exposure to Plasmodium falciparum affects survival of An. gambiae and An. coluzzii across a range of temperatures. Survival is analysed using parametric methods and TAUS ()
+This chapter explores how exposure to Plasmodium falciparum affects survival of An. gambiae and An. coluzzii across a range of temperatures. Survival is analysed using parametric methods and TAUS (https://github.com/casasgomezuribarri/TAUS)
