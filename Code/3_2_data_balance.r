@@ -1,14 +1,12 @@
 # this script plots the balance of the data
-# author: ivan casas gomez-uribarri
+# author: ivan casas
 
 
 ##################################################################################################################################
 # Environment
 ##################################################################################################################################
 
-source("Code/compile_data_survival.r") # sets the right wd and calls view() on each dataset
-
-# run script that defines custom functions
+source("Code/compile_data_survival.r") # sets the right wd and prepares the data nicely
 source("Code/functions.r")
 
 # load packages
@@ -71,3 +69,4 @@ covariates <- grid.arrange(
   heights = c(10, 1)
 )
 ggsave(filename = "/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/distribution_confounding_factors.png", plot = covariates, width = 12, height = 5)
+ggsave(filename = "Figures/distribution_confounding_factors.png", plot = covariates, width = 12, height = 5)

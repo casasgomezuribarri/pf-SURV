@@ -9,7 +9,7 @@
 ##################################################################################################################################
 # Environment
 ##################################################################################################################################
-source("Code/compile_data_survival.r") # sets the right wd and calls view() on each dataset
+source("Code/compile_data_survival.r") # sets the right wd and prepares the data
 source("Code/functions.r")
 
 # load packages
@@ -129,6 +129,7 @@ plots <- plot_grid(subplots, legend, ncol = 2, rel_widths = c(1, 0.2)) # add leg
 # plots <- subplots
 plots
 ggsave(plot = plots, filename = "/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/oocyst_prevalences_timeline.png", width = 15, height = 9)
+ggsave(plot = plots, filename = "Figures/oocyst_prevalences_timeline.png", width = 15, height = 9)
 
 ##################################################################################################################################
 # Oocyst prevalence by treatment
@@ -202,6 +203,7 @@ ooPrev <- ggplot(prev_summary, aes(x = interaction(temp_range, mean_temp, specie
 
 ooPrev
 ggsave(filename = "/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/oocyst_prevalences.png", plot = ooPrev, width = 12, height = 9)
+ggsave(filename = "Figures/oocyst_prevalences.png", plot = ooPrev, width = 12, height = 9)
 
 # stats
 ##################################################################################################################################
@@ -351,12 +353,19 @@ ooCount <- ggplot(prev_summary, aes(x = interaction(temp_range, mean_temp, speci
 
 ooCount
 ggsave(filename = "/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/oocyst_counts.png", plot = ooCount, width = 12, height = 9)
+ggsave(filename = "Figures/oocyst_counts.png", plot = ooCount, width = 12, height = 9)
 
 # extract legend for plotting
 ooCount_legend <- ooCount + theme(legend.position = "bottom")
 legend_only <- cowplot::get_legend(ooCount_legend)
 cowplot::save_plot(
     "/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/colormap.png",
+    legend_only,
+    base_width = 10, # wide enough for horizontal legend
+    base_height = 0.8 # short since it's just one row
+)
+cowplot::save_plot(
+    "Figures/colormap.png",
     legend_only,
     base_width = 10, # wide enough for horizontal legend
     base_height = 0.8 # short since it's just one row

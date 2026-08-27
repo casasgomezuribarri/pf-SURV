@@ -2,6 +2,8 @@
 # also plots the result overlapped with ocyst times
 # TAUS: Time-Agnostic Unified Survival
 
+# author:ivan casas
+
 
 ##################################################################################################################################
 # Environment (loading packages and data)
@@ -64,7 +66,7 @@ ggplot(surv, aes(x = !!sym(time_var), fill = event_factor)) +
         legend.title = element_text(size = 24),
         legend.text = element_text(size = 22)
     )
-# ggsave(paste0("Figures/", plot_names, "_histograms.png"), width = 20, height = 20)
+ggsave(paste0("Figures/", plot_names, "_histograms.png"), width = 20, height = 20)
 
 ##################################################################################################################################
 # conditional survival: calculate and visualise
@@ -285,6 +287,7 @@ combined_plot <- ggplot(taus_analysis, aes(x = tau, y = O_tau, color = exposed))
 combined_plot
 
 ggsave(plot = combined_plot, paste0("/Users/ivancasas/GitHub/Thesis/Chapters/03_SURV/pics/", plot_names, "_P(T>tau)_panel_shaded.png"), width = 20, height = 12, units = "in", dpi = 150)
+ggsave(plot = combined_plot, paste0("Figures/", plot_names, "_P(T>tau)_panel_shaded.png"), width = 20, height = 12, units = "in", dpi = 150)
 
 ##################################################################################################################################
 # An example of TAUS for statistical analysis of survival

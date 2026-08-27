@@ -1,6 +1,9 @@
-# This script checks checks for systematic drift in the data across replicates
+# This script checks checks for systematic differences
+# in gametocytaemia and age at exposure across replicates
 
-# load data
+# author: ivan casas
+
+# env
 ##########################################################################################################
 library(readxl)
 library(lme4)
@@ -8,8 +11,10 @@ library(dplyr)
 library(tidyr)
 library(lmerTest)
 library(car)
+source("Code/functions.r")
 
-path <- "/Users/ivancasas/Library/CloudStorage/OneDrive-UniversityofGlasgow/Aa PhD/Aa PhD Project/Lab/Experiments/Experimental schedule.xlsx"
+
+path <- "Data/experiments.xlsx"
 data <- read_excel(path, sheet = "feeds")
 # view(data)
 
@@ -98,21 +103,3 @@ p_table_age <- rbind(
 )
 
 print(p_table_age)
-
-
-# p computation (type iii test)
-datalong_sumto0 <- datalong
-contrasts(datalong_sumto0$temp_mean) <- contr.sum(2)
-contrasts(datalong_sumto0$species) <- contr.sum(2)
-
-# update the model
-age_exp_sumto0 <- glm(age ~ temp_mean * species, data = datalong_sumto0)
-
-# sanity check: these two models will have different results, and sumto0 rresults are not interpretable. Check the models are the same via other metrics
-logLik(age_exp) # -27.46431 (df=5)
-logLik(age_exp_sumto0) # -27.46431 (df=5)
-AIC(age_exp) # 64.92861
-AIC(age_exp_sumto0) # 64.92861
-
-Anova(age_exp_sumto0, type = "III", test.statistic = "LR") # type III LRT test (violates marginality)
-# LR becuase its a lm not a glm (Chisq not supported)
