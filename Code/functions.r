@@ -19,7 +19,7 @@ compare_parametric_fits <- function(data # a lifetable
                                     , dists = c("genf", "gengamma", "weibull", "gompertz", "gamma", "llogis", "lnorm", "exp") # distributions to fit, default is all of them
                                     , funcs = c("survival", "hazard", "cumhaz") # types of plots to produce, default is all of them
                                     , plot_title = "Parametric Survival Model Fits") {
-  # useful for later
+  # useful for later (x titles)
   pretty_dict <- c(
     genf     = "Gen. F",
     gengamma = "Gen. Gamma",
@@ -29,6 +29,13 @@ compare_parametric_fits <- function(data # a lifetable
     llogis   = "Log-Logistic",
     lnorm    = "Log-Normal",
     exp      = "Exponential"
+  )
+
+  # y-axis labels: quantity + units
+  func_labels <- c(
+    survival = "Survival Probability, S(t)",
+    hazard   = "Hazard Rate, h(t)",
+    cumhaz   = "Cumulative Hazard, H(t)"
   )
 
   # fit all models
@@ -70,8 +77,9 @@ compare_parametric_fits <- function(data # a lifetable
     ks_pval <- ks.test(emp_surv, theo_surv)$p.value
   })
   # *reason for that km fit
-  # - CS residuals should resemble data from an Exp(1) without censoring
+  # - if the model fits well, CS residuals should resemble an Exp(1)
   # - fitting a KM to it effectively handles the censoring present
+  # - the p value compares this km of residuals to an Exp(1) dist
   # - check https://search.r-project.org/CRAN/refmans/flexsurv/html/coxsnell_flexsurvreg.html
 
   # use the dicitonary from above
@@ -99,33 +107,49 @@ compare_parametric_fits <- function(data # a lifetable
   n_dists <- length(fit_list_ordered)
   n_funcs <- length(funcs)
   op <- par(no.readonly = TRUE) # save old par settings
-  par(mfrow = c(n_funcs, n_dists), mar = c(2, 2, 6, 1), oma = c(4, 4, 6, 2)) # margins and layout
-
-  # # titles (top row)
-  # for (label in dist_labels_ordered) {
-  #   plot.new()
-  #   title(main = label, cex.main = 1.2)
-  # }
+  par(mfrow = c(n_funcs, n_dists), mar = c(2, 2, 6, 1), oma = c(4, 6, 6, 2)) # margins and layout
 
   # the actual plots
+  row_mid <- setNames(numeric(length(funcs)), funcs) # will hold each row's vertical center, in NDC
+
   for (func in funcs) {
     for (dist in dist_names) {
       fit <- fit_list[[dist]]
       if (func == funcs[1]) {
         plot(fit,
-          type = func, xlab = "", ylab = func,
+          type = func, xlab = "", ylab = "",
+          col = "red", col.obs = "black",
           main = paste0(pretty_dict[[dist]], "\nAIC: ", round(aics[dist], 2), "\np: ", round(ks_pvals[dist], 3))
         )
       } else {
-        plot(fit, type = func, xlab = "", ylab = func, main = NULL)
+        plot(fit,
+          type = func, xlab = "", ylab = "",
+          col = "red", col.obs = "black",
+          main = NULL
+        )
+      }
+      if (dist == dist_names[1]) {
+        row_mid[func] <- mean(par("fig")[3:4]) # record position of each row for ylabels
       }
     }
   }
-
+  # add y labels
+  for (func in funcs) {
+    mtext(func_labels[[func]], side = 2, outer = TRUE, line = 3, at = row_mid[func], cex = 1.3)
+  }
   # extras
-  mtext("Time", side = 1, outer = TRUE, line = 2)
+  mtext("Time", side = 1, outer = TRUE, line = 2, cex = 1.3)
   mtext("", side = 2, outer = TRUE, line = 2)
   mtext(plot_title, side = 3, outer = TRUE, line = 4, cex = 1.5)
+
+  # legend
+  par(fig = c(0, 1, 0, 1), mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0), new = TRUE)
+  plot.new()
+  legend("top",
+    legend = c("Fitted parametric model", "Empirical curve"),
+    col = c("red", "black"), lty = 1, lwd = 2,
+    horiz = TRUE, bty = "n", xpd = NA, cex = 1.7
+  )
 
   plot <- recordPlot()
 
@@ -136,7 +160,7 @@ compare_parametric_fits <- function(data # a lifetable
 
 
 # get empirical KM curves for custom groups (specifically tailored to my use case)
-get_km_data <- function(surv_df, nd, grouping_col = NA) {
+get_km_data <- function(surv_df, nd, time_var = "dpi", grouping_col = NA) {
   # these labels are for plotting downstream
   nd <- nd %>%
     mutate(
@@ -183,7 +207,7 @@ get_km_data <- function(surv_df, nd, grouping_col = NA) {
     }
 
     # fit km and format as tibble
-    km <- survfit(Surv(age, dead) ~ 1, data = sub)
+    km <- survfit(Surv(sub[[time_var]], sub$dead) ~ 1, data = sub)
     if (!is.na(grouping_col)) {
       tibble(
         time = c(0, km$time),

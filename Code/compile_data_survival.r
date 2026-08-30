@@ -505,11 +505,11 @@ surv_summary_prev <- surv %>%
   ) %>%
   # ensure all pot columns exist even if a pot never appears in any replicate
   tibble::add_column(!!!setNames(
-    lapply(setdiff(pot_cols, names(.)), function(p) 0), # ← 0 not NA_real_
+    lapply(setdiff(pot_cols, names(.)), function(p) 0), # 0 not NA_real_
     setdiff(pot_cols, names(.))
   )) %>%
   select(replicate, infection_date, length_days, all_of(pot_cols)) %>%
-  mutate(across(all_of(pot_cols), ~ replace(.x, is.na(.x) | is.nan(.x), 0))) %>% # ← catch any remaining
+  mutate(across(all_of(pot_cols), ~ replace(.x, is.na(.x) | is.nan(.x), 0))) %>% # catch any remaining
   rowwise() %>%
   mutate(mean = round(mean(c_across(all_of(pot_cols))[c_across(all_of(pot_cols)) != 0], na.rm = TRUE), 3)) %>%
   ungroup()

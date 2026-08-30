@@ -16,6 +16,7 @@ source("Code/functions.r")
 packages <- c(
     "ggplot2",
     "tidyr",
+    "marginaleffects",
     "emmeans",
     "cowplot",
     "dplyr",
@@ -72,7 +73,7 @@ prevalence_g <- ggplot(prevalence_gambiae, aes(x = dpi, y = mean_prevalence, fil
     labs(
         title = "An. gambiae",
         x = "Days Post Infection (DPI)",
-        y = "Prevalence (% positive)",
+        y = "Prevalence",
         fill = "Temperature",
         # color = "Temperature",
     ) +
@@ -107,7 +108,7 @@ prevalence_c <- ggplot(prevalence_coluzzii, aes(x = dpi, y = mean_prevalence, fi
     labs(
         title = "An. coluzzii",
         x = "Days Post Infection (DPI)",
-        y = "Prevalence (% positive)",
+        y = "Prevalence",
         fill = "Temperature",
         color = "Temperature",
     ) +
@@ -178,15 +179,15 @@ ooPrev <- ggplot(prev_summary, aes(x = interaction(temp_range, mean_temp, specie
     coord_cartesian(clip = "off") + # to allow marginal annotations for fancy axis
     annotation_custom(
         grob = textGrob("Range °C", gp = gpar(fontsize = 24), hjust = 1),
-        xmin = 0.3, xmax = 0.3, ymin = -0.06, ymax = -0.06
+        xmin = 0.3, xmax = 0.3, ymin = -0.07, ymax = -0.07
     ) + # add marginal trange label
     annotation_custom(
         grob = textGrob("Mean °C", gp = gpar(fontsize = 24), hjust = 1),
-        xmin = 0.3, xmax = 0.3, ymin = -0.1025, ymax = -0.1025
+        xmin = 0.3, xmax = 0.3, ymin = -0.13, ymax = -0.13
     ) + # marginal tmean label
     annotation_custom(
         grob = textGrob("Species", gp = gpar(fontsize = 24), hjust = 1),
-        xmin = 0.3, xmax = 0.3, ymin = -0.145, ymax = -0.145
+        xmin = 0.3, xmax = 0.3, ymin = -0.19, ymax = -0.19
     ) + # species label
     theme(
         # axis.text.x = element_text(hjust = 1),
@@ -248,8 +249,9 @@ ooprev_data$pot <- relevel(ooprev_data$pot, ref = "ki270")
 
 # binomial model for oocyst presence as a function of experimental group
 prev_model <- glmer(oo_positive ~ species * temp_mean * temp_range + (1 | replicate) + (1 | pot_unique), data = ooprev_data, family = binomial)
-summary(prev_model) # only for reporting coefs and SD of random effects - NOT pvalues
+summary(prev_model) # only for coefs and SD of random effects - NOT pvalues
 
+avg_comparisons(prev_model, variables = "temp_range") # average marginal effect of tempreature range mentioned in the text
 
 # p computation - type iii analysis framework. we do it manually for consistency across models:
 ###############################################################################################
@@ -323,19 +325,19 @@ ooCount <- ggplot(prev_summary, aes(x = interaction(temp_range, mean_temp, speci
     coord_cartesian(clip = "off") + # to allow marginal annotations
     annotation_custom(
         grob = textGrob("Range °C",
-            x = unit(-0.02, "npc"), y = unit(-0.02, "npc"),
+            x = unit(-0.02, "npc"), y = unit(-0.03, "npc"),
             gp = gpar(fontsize = 24), hjust = 1
         )
     ) + # add marginal trange label
     annotation_custom(
         grob = textGrob("Mean °C",
-            x = unit(-0.02, "npc"), y = unit(-0.07, "npc"),
+            x = unit(-0.02, "npc"), y = unit(-0.10, "npc"),
             gp = gpar(fontsize = 24), hjust = 1
         )
     ) + # marginal tmean label
     annotation_custom(
         grob = textGrob("Species",
-            x = unit(-0.02, "npc"), y = unit(-0.12, "npc"),
+            x = unit(-0.02, "npc"), y = unit(-0.17, "npc"),
             gp = gpar(fontsize = 24), hjust = 1
         )
     ) + # species label
@@ -401,6 +403,19 @@ summary(count_model) # we use this only for coefs. NOT pvalues
 # )
 # AIC(count_model, count_model_nb1) # low is good
 
+# model diagnostics
+count_model$sdr$pdHess # should be TRUE (standard error report, positive definite Hessian   )
+diagnose(count_model) # from glmmTMB, flags singular fits
+install.packages("DHARMa")
+library(DHARMa)
+sim_res <- simulateResiduals(count_model, n = 1000)
+plot(sim_res) # QQ is straight + residual vs fitted is patternless. All tests are nonsignificant
+testDispersion(sim_res) # no over/underdispersion
+testOutliers(sim_res) # residual histogram approximately uniform
+
+# seems like an alright model. Let's check effect sizes
+emmeans(count_model, ~ temp_range | species * temp_mean, type = "response") |> pairs()
+
 # p computation - type iii analysis framework. we do it manually for consistency across models:
 ##############################################################################################
 
@@ -445,3 +460,5 @@ p_table_count <- rbind(
 )
 
 print(p_table_count)
+
+car::vif(count_model_sumto0)

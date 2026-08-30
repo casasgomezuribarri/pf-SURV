@@ -57,9 +57,9 @@ str(surv)
 # choose a distribution
 par_fit <- compare_parametric_fits(
     data = surv,
-    time_var = "age",
+    time_var = "dpi",
     event_var = "dead",
-    plot_title = paste0("Parametric fits")
+    plot_title = paste0("")
 )
 # save plot
 par_fit$plot
@@ -80,7 +80,7 @@ dev.off()
 
 par_fit$comparison
 # avoid GenF & Genγ (they're not very parsimonious options...)
-best_dist <- "llogis"
+best_dist <- "weibull"
 
 # for interpreatbility, let's make ki270 the reference level...
 surv$exposed <- relevel(surv$exposed, ref = "Control")
@@ -89,7 +89,7 @@ surv$temp_range <- relevel(surv$temp_range, ref = "0")
 surv$species <- relevel(surv$species, ref = "An. gambiae")
 
 m_exp_4 <- flexsurvreg(
-    event ~ exposed * species * temp_mean * temp_range,
+    Surv(dpi, dead) ~ exposed * species * temp_mean * temp_range,
     data = surv, dist = best_dist
 )
 
@@ -124,7 +124,7 @@ surv_data_sumto0 <- cbind(surv, as.data.frame(X_matrix)) # used to be surv_data_
 
 
 # full model formula (model.matrix warped names a bit but thats okay)
-full_formula <- event ~ exposed1 + species1 + temp_mean1 + temp_range1 + # mains
+full_formula <- Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + # mains
     exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + # 2ways
     exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + # 3ways
     exposed1_species1_temp_mean1_temp_range1 # 4way
@@ -133,27 +133,27 @@ full_formula <- event ~ exposed1 + species1 + temp_mean1 + temp_range1 + # mains
 best_model_sumto0 <- flexsurvreg(full_formula, data = surv_data_sumto0, dist = best_dist) # used to be full_surv
 
 # sanity check that they are indeed the same model
-logLik(best_model) # -16085.19 (df=17)
-logLik(best_model_sumto0) # -16085.19 (df=17)
-AIC(best_model) # 32204.39
-AIC(best_model_sumto0) # 32204.39
+logLik(best_model) # -16076.25 (df=17) (df=17), llogis: -16085.19 (df=17)
+logLik(best_model_sumto0) # -16076.25 (df=17) (df=17), llogis: -16085.19 (df=17)
+AIC(best_model) # 32186.51, llogis: 32204.39
+AIC(best_model_sumto0) # 32186.51 , llogis: 32204.39
 
 # right. now fit every single relevant nested model (full model without 1 term)
-no_ex <- flexsurvreg(event ~ species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_sp <- flexsurvreg(event ~ exposed1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_tm <- flexsurvreg(event ~ exposed1 + species1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_sp <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_tm <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_sp_tm <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_sp_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_tm_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_sp_tm <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_sp_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_tm_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_sp_tm_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
-no_ex_sp_tm_tr <- flexsurvreg(event ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex <- flexsurvreg(Surv(dpi, dead) ~ species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_sp <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_tm <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_sp <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_tm <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_sp_tm <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_sp_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_tm_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_sp_tm <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_sp_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_tm_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + species1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_sp_tm_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + exposed1_species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
+no_ex_sp_tm_tr <- flexsurvreg(Surv(dpi, dead) ~ exposed1 + species1 + temp_mean1 + temp_range1 + exposed1_species1 + exposed1_temp_mean1 + exposed1_temp_range1 + species1_temp_mean1 + species1_temp_range1 + temp_mean1_temp_range1 + exposed1_species1_temp_mean1 + exposed1_species1_temp_range1 + exposed1_temp_mean1_temp_range1 + species1_temp_mean1_temp_range1, data = surv_data_sumto0, dist = best_dist)
 
 # custom function to show them all together
 p_table_surv <- rbind(
@@ -224,7 +224,7 @@ selected_colors <- my_palette[c(1, 2)]
 
 
 # kms to overlap with predictions (custom function for computing kms)
-km1 <- get_km_data(surv, nd1, "exposed")
+km1 <- get_km_data(surv, nd1, time_var = "dpi", grouping_col = "exposed")
 
 # calculate median survival per facet and group
 median_survival <- km1 %>%

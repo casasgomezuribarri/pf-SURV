@@ -204,7 +204,8 @@ replicates <- dissection %>%
         se_count = sd(oocysts[oocysts != 0], na.rm = TRUE) / sqrt(sum(oocysts != 0, na.rm = TRUE)),
         # .groups = "drop"
     )
-
+sum(dissection$midgut_dissection, na.rm = TRUE) # total dissected
+sum(replicates$n_midguts) # total dissected after removing zero inflation
 # view(replicates)
 
 
